@@ -1,0 +1,147 @@
+---
+title: "Temperatura JP x CG"
+output:
+    html_document:
+    df_print: paged
+theme: sandstone
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(lubridate)
+library(ggbeeswarm)
+theme_set(theme_bw())
+```
+
+```{r read}
+climas = read_csv(here::here("data/clima_cg_jp-semanal.csv"), 
+                  col_types = "cTdddddd")
+
+glimpse(climas)
+```
+
+## Temperatura
+
+### Onde é mais quente?
+```{r}
+
+medidas_centro = climas %>%
+    group_by(cidade) %>%
+    summarise(mediana = median(tmedia),
+              media = mean(tmedia))
+
+climas %>%
+    ggplot(aes(x = cidade, y = tmedia, color = cidade)) +
+    geom_jitter(alpha=.5) +
+    geom_point(data = medidas_centro, aes(x = cidade, y = mediana), color = "purple") +
+    geom_point(data = medidas_centro, aes(x = cidade, y = media), color = "darkblue")
+
+# como adicionar as legendas da media e mediana ?
+
+```
+
+
+### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?  
+
+```{r}
+climas %>% 
+    ggplot(aes(x = semana, y = tmax)) +
+    geom_line(color="red") +
+    geom_line(aes(x = semana, y = tmedia),color="lightblue")+
+    facet_wrap(~cidade, ncol=1)
+```
+
+
+### Quais os meses mais quentes e mais frios? 
+
+```{r}
+climas %>% 
+    ggplot(aes(x = mes, y = tmedia, color = cidade)) +
+    geom_jitter(alpha=.5) +
+    scale_x_continuous(breaks = 1:12)
+```
+
+
+
+### Qual foi o São João  mais frio de CG que está nos nossos dados?
+
+```{r}
+min = climas %>%  
+    group_by(ano) %>%
+    filter(mes == 6) %>%
+    filter(cidade == "Campina Grande") %>% 
+    summarise(mediana = min(tmedia))
+
+glimpse(min)
+
+climas %>%
+    filter(mes == 6) %>%
+    filter(cidade == "Campina Grande") %>% 
+    ggplot(aes(x = ano, y = tmedia)) +
+    geom_jitter(alpha = .5) 
+    #geom_point(data = min, aes(x = ano, y = min), color = "purple") 
+    
+# não consegui colocar o ponto par marcar o mininimo.
+# mudar para ir de ano em ano
+
+```
+
+
+## Chuva
+
+### Quanto chove por semana em JP e CG?
+
+```{r}
+
+climas %>% 
+    ggplot(aes(x = semana, y = chuva, color = cidade)) +
+    geom_jitter(alpha = .5) +
+    facet_grid(~ cidade)
+    
+# esse aqui não da para ver bem
+    
+
+```
+
+
+## Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva varia mais ou menos que a temperatura? O formato da distribuição é igual? 
+
+```{r}
+climas %>% 
+    ggplot(aes(x = semana, y = chuva)) +
+    geom_line(color="darkred", alpha = .5) +
+    geom_line(aes(x = semana, y = chuva), color = "lightblue", alpha = .5)+
+    facet_wrap(~cidade, ncol=1)
+
+# ruim de ver tb
+```
+
+### No geral, onde chove mais?
+
+```{r}
+medidas_centro = climas %>%
+    group_by(cidade) %>%
+    summarise(mediana = median(chuva),
+              media = mean(chuva))
+
+climas %>% 
+    ggplot(aes(x = ano, y = chuva, color = cidade)) +
+    geom_line(alpha = .5) 
+```
+
+
+
+### A distribuição é diferente em meses específicos? 
+
+```{r}
+climas %>%
+    group_by(mes) %>%
+    ggplot(aes(x = mes, y = chuva, color = cidade)) +
+    geom_jitter(alpha=.5) +
+    scale_x_continuous(breaks = 1:12) + 
+    facet_wrap(~cidade, ncol=1)
+    
+```
+
+

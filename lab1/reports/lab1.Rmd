@@ -1,0 +1,62 @@
+---
+title: "Lab 1"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+---
+
+#Setup
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+#Lendo dados
+```{r}
+all_series = read_csv(here("data/series_from_imdb.csv.zip"), 
+                      col_types = "ccdcdcdddddddddddd") 
+
+glimpse(all_series)
+```
+
+
+Público: Pessoas que gostam das séries especificadas e sites interessados em ranking de séries ?
+ * 1 e 2 não serão todas as séries, pegar alguma lista na internet. (não exaustivo)
+
+# 1 - Quais as séries mais bem avaliadas de drama na netflix  ? 
+	Espero que seja Grey’s Anatomy.
+# 2 - Quais as séries com pior avaliação de ficção-científica na netflix ?
+	Acho que vai ser Mortal Kombat.
+# 3 - Quais séries duraram mais que uma década ?
+	Greys’s Anatomy, Friends, That 70’s show.
+# 4 - Qual a melhor e pior temporada de Grey's Anatomy ?
+	A que Cristina sai, acho que é na 10º. 
+# 5 - Qual episódio de Strangers Things tem mais notas 0 e 10 ?
+	Algum da segunda vai ter mais notas 0 e o episódio do final da primeira vai ser o com mais 10.
+# 6 - Orange is the new black melhorou ou piorou com o tempo ?
+	Piorou.
+
+```{r}
+# 1 - Quais as séries mais bem avaliadas de drama na netflix  ? 
+    
+# Series: 13 Reasons Why, Bates Motel, Better Call Saul, Billions,  Bloodline, Breaking Bad, Grey’s Anatomy, House of Cards, How to Get Away with Murder, Mad Men
+
+drama_series <- c("13 Reasons Why", "Better Call Saul", "Billions", "A Anatomia de Grey", "House of Cards",  "Ozark", "Ray Donovan", "Suits", "The Crown", "The Good Wife")
+
+all_series %>%
+    filter(series_name %in% drama_series) %>%
+    ggplot(aes(x = series_name, y = UserRating)) + 
+    geom_jitter(alpha = .5)
+    
+
+
+
+```
+
+

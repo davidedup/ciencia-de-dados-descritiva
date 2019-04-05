@@ -102,3 +102,12 @@ all_series %>%
 
 ```
 
+```{r}
+# 3 - Quais séries duraram mais que uma década ?
+
+all_series %>%
+    group_by(series_name) %>%
+    filter(season > 10) %>%
+    glimpse()
+```
+

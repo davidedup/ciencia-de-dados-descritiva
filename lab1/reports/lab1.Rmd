@@ -49,12 +49,23 @@ Público: Pessoas que gostam das séries especificadas e sites interessados em r
 
 drama_series <- c("13 Reasons Why", "Better Call Saul", "Billions", "A Anatomia de Grey", "House of Cards",  "Ozark", "Ray Donovan", "Suits", "The Crown", "The Good Wife")
 
+sumario = all_series %>%
+    filter(series_name %in% drama_series) %>%
+    group_by(series_name) %>%
+    summarise(median_series = median(UserRating))
+
+glimpse(sumario)
+
 all_series %>%
     filter(series_name %in% drama_series) %>%
-    ggplot(aes(x = series_name, y = UserRating)) + 
-    geom_jitter(alpha = .5)
-    
-
+    group_by(series_name) %>%
+    ggplot(aes(x = series_name, y = UserRating, color = series_name)) + 
+    geom_jitter(alpha = .5) +
+    coord_flip() +
+    geom_point(data = sumario, 
+            mapping = aes(x = series_name, y = median_series), 
+            color = "black", 
+            size = 1.5)
 
 
 ```

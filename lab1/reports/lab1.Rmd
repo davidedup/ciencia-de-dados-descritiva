@@ -44,8 +44,8 @@ Público: Pessoas que gostam das séries especificadas e sites interessados em r
 
 ```{r}
 # 1 - Quais as séries mais bem avaliadas de drama na netflix  ? 
-    
 # Series: 13 Reasons Why, Bates Motel, Better Call Saul, Billions,  Bloodline, Breaking Bad, Grey’s Anatomy, House of Cards, How to Get Away with Murder, Mad Men
+#Fonte: https://www.minhaserie.com.br/novidades/43043-17-melhores-series-de-drama-para-assistir-na-netflix
 
 drama_series <- c("13 Reasons Why", "Better Call Saul", "Billions", "A Anatomia de Grey", "House of Cards",  "Ozark", "Ray Donovan", "Suits", "The Crown", "The Good Wife")
 
@@ -67,7 +67,38 @@ all_series %>%
             color = "black", 
             size = 1.5)
 
+#TODO: pintar o minino de outra cor 
+#TODO: colocar as series na mesma sequencia
 
 ```
 
+
+```{r}
+# 2 - Quais as séries com pior avaliação de ficção-científica na netflix ?
+
+#Series: Black Mirror, Dark, The Expanse, Altered Carbon, Os 100, 3%, Travelers, Mars
+
+
+fiction_series <- c("Black Mirror", "Dark", "The Expanse", "Altered Carbon", "Os 100", "3%", "Travelers", "Mars")
+
+sumario = all_series %>%
+    filter(series_name %in% fiction_series) %>%
+    group_by(series_name) %>%
+    summarise(median_series = mean(UserRating))
+
+glimpse(sumario)
+
+
+all_series %>%
+    filter(series_name %in% fiction_series) %>%
+    group_by(series_name) %>%
+    ggplot(aes(x = series_name, y = UserRating, color = series_name)) + 
+    geom_jitter(alpha = .5) +
+    coord_flip() +
+    geom_point(data = sumario, 
+            mapping = aes(x = series_name, y = median_series), 
+            color = "black", 
+            size = 1.5)
+
+```
 

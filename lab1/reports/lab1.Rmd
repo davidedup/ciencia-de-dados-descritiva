@@ -60,8 +60,8 @@ all_series %>%
     filter(series_name %in% drama_series) %>%
     group_by(series_name) %>%
     ggplot(aes(x = series_name, y = UserRating, color = series_name)) + 
+    theme(axis.text.x = element_text(angle = -45)) +
     geom_jitter(alpha = .5) +
-    coord_flip() +
     geom_point(data = sumario, 
             mapping = aes(x = series_name, y = median_series), 
             color = "black", 
@@ -104,10 +104,31 @@ all_series %>%
 
 ```{r}
 # 3 - Quais séries duraram mais que uma década ?
+ #Top10 = 
+
+#top10 <- 
+
 
 all_series %>%
     group_by(series_name) %>%
-    filter(season > 10) %>%
-    glimpse()
+    summarise(count_season = max(season)) %>% 
+    filter(count_season >= 10) %>% 
+    arrange(count_se)
+```
+
+```{r}
+# 6 - Orange is the new black melhorou ou piorou com o tempo ?
+
+sumario = all_series %>%
+    filter(series_name == "Orange Is the New Black") %>% 
+    group_by(season) %>% 
+    summarise(median_series = mean(UserRating))
+
+
+all_series %>%
+    filter(series_name == "Orange Is the New Black") %>% 
+    group_by(season) %>% 
+    ggplot(aes(x = series_ep, y = UserRating, color =  season)) +
+    geom_line() 
 ```
 

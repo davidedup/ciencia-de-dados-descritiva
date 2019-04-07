@@ -60,7 +60,7 @@ all_series %>%
     filter(series_name %in% drama_series) %>%
     group_by(series_name) %>%
     ggplot(aes(x = series_name, y = UserRating, color = series_name)) + 
-    theme(axis.text.x = element_text(angle = -45)) +
+    theme(axis.text.x = element_text(angle = -60)) +
     geom_jitter(alpha = .5) +
     geom_point(data = sumario, 
             mapping = aes(x = series_name, y = median_series), 
@@ -94,7 +94,7 @@ all_series %>%
     group_by(series_name) %>%
     ggplot(aes(x = series_name, y = UserRating, color = series_name)) + 
     geom_jitter(alpha = .5) +
-    coord_flip() +
+    theme(axis.text.x = element_text(angle = -60)) +
     geom_point(data = sumario, 
             mapping = aes(x = series_name, y = median_series), 
             color = "black", 
@@ -103,18 +103,61 @@ all_series %>%
 ```
 
 ```{r}
-# 3 - Quais séries duraram mais que uma década ?
- #Top10 = 
+# 3 - Quais as durações médias das séries: Grey's Anatomy,  Black Mirror, Strangers Thing, Sex and The City, Avatar: A Lenda de Korra, Orange Is the New Black, House of Cards e The Good Wife ?
 
-#top10 <- 
-
+my_series <- c("A Anatomia de Grey",  "Black Mirror", "Stranger Things", "Sex and the City", "Avatar: A Lenda de Korra", "Orange Is the New Black", "House of Cards", "The Good Wife")
 
 all_series %>%
-    group_by(series_name) %>%
-    summarise(count_season = max(season)) %>% 
-    filter(count_season >= 10) %>% 
-    arrange(count_se)
+    filter(series_name %in% my_series) %>%
+    group_by(series_name) %>% 
+    ggplot(aes(x = season_ep, y = series_name, color = series_name)) +
+    geom_line(size = 10 )
+
+# O eixo x não parece estar certo a quatindade de episodios é bem maior
+    
 ```
+
+```{r}
+# 4 - Quais as melhores e piores temporadas de Grey's Anatomy ?
+
+sumario = all_series %>%
+    filter(series_name == "A Anatomia de Grey") %>%
+    group_by(season) %>%
+    summarise(median_series = median(UserRating), media = mean(UserRating))
+
+
+all_series %>% 
+    filter(series_name == "A Anatomia de Grey") %>% 
+    group_by(season) %>% 
+    ggplot(aes(x = season, y = UserRating, color = season)) + 
+    geom_point() + 
+    geom_point(data = sumario, 
+            mapping = aes(x = season, y = median_series), 
+            color = "black", 
+            size = 1.5) + 
+    geom_point(data = sumario, 
+            mapping = aes(x = season, y = media), 
+            color = "darkred", 
+            size = 1.5)
+    
+# A ordem ta bagunçada
+  
+``` 
+```{r}
+# 5 - Qual episódio de Strangers Things tem mais notas 0 e 10 ?
+
+all_series %>% 
+    filter(series_name == "Stranger Things") %>% 
+    group_by(season) %>% 
+    ggplot() + 
+    geom_point(aes(x = series_ep, y = r1), color = "red") +
+    geom_point(aes(x = series_ep, y = r10), color = 'green') +
+    scale_x_continuous(breaks = 1:18)
+
+# verde  = r10, vermelho = r1, como colocar isso no grafico
+
+```
+
 
 ```{r}
 # 6 - Orange is the new black melhorou ou piorou com o tempo ?
@@ -122,7 +165,8 @@ all_series %>%
 sumario = all_series %>%
     filter(series_name == "Orange Is the New Black") %>% 
     group_by(season) %>% 
-    summarise(median_series = mean(UserRating))
+    summarise(median_series = mean(UserRating)) %>% 
+    glimpse()
 
 
 all_series %>%
@@ -130,5 +174,12 @@ all_series %>%
     group_by(season) %>% 
     ggplot(aes(x = series_ep, y = UserRating, color =  season)) +
     geom_line() 
+
+
+sumario %>% 
+    ggplot(aes(x = season, y = median_series, color = season)) +
+    geom_point(size = 7)
+    
+
 ```
 

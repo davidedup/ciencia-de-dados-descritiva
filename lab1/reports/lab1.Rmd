@@ -10,7 +10,6 @@ output:
     toc_float: yes
 ---
 
-#Setup
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
 library(tidyverse)
 library(here)
@@ -24,7 +23,7 @@ all_series = read_csv(here("data/series_from_imdb.csv.zip"),
 ```
 
 # 1 - Quais das séries de drama na netflix listadas abaixo são as mais bem avaliadas ?
-Series: 13 Reasons Why, Bates Motel, Better Call Saul, Billions,  Bloodline, Breaking Bad, Grey’s Anatomy, House of Cards, How to Get Away with Murder, Mad Men
+Séries: 13 Reasons Why, Bates Motel, Better Call Saul, Billions,  Bloodline, Breaking Bad, Grey’s Anatomy, House of Cards, How to Get Away with Murder, Mad Men.
 Fonte: https://www.minhaserie.com.br/novidades/43043-17-melhores-series-de-drama-para-assistir-na-netflix
 ```{r}
 drama_series <- c("13 Reasons Why", "Better Call Saul", "Billions", "A Anatomia de Grey", "House of Cards",  "Ozark", "Ray Donovan", "Suits", "The Crown", "The Good Wife")
@@ -33,8 +32,6 @@ sumario = all_series %>%
     filter(series_name %in% drama_series) %>%
     group_by(series_name) %>%
     summarise(median_series = median(UserRating))
-
-glimpse(sumario)
 
 all_series %>%
     filter(series_name %in% drama_series) %>%
@@ -51,20 +48,13 @@ all_series %>%
 ```
 # 2 - Quais das séries de ficção-científica na netflix listadas abaixo tem a pior avaliação ?
 Series: Black Mirror, Dark, The Expanse, Altered Carbon, Os 100, 3%, Travelers, Mars
-
 ```{r}
-
-
-
 fiction_series <- c("Black Mirror", "Dark", "The Expanse", "Altered Carbon", "Os 100", "3%", "Travelers", "Mars")
 
 sumario = all_series %>%
     filter(series_name %in% fiction_series) %>%
     group_by(series_name) %>%
     summarise(median_series = mean(UserRating))
-
-glimpse(sumario)
-
 
 all_series %>%
     filter(series_name %in% fiction_series) %>%
@@ -87,9 +77,8 @@ all_series %>%
     group_by(series_name) %>% 
     ggplot(aes(x = season_ep, y = series_name, color = series_name)) +
     geom_line(size = 10 )
-    
 ```
-
+Das séries escolhidas podemos observar que A Anatomia de Grey tem a maior duração, seguida por The Good Wife. Sex and the City também apresenta uma duração grande. As demais series apresentam uma duração parecida, com exceção de Strager Things e Black Mirror que são series atuais e que ainda possum pouco episódios.  
 # 4 - Quais as melhores e piores temporadas de Grey's Anatomy ?
 ```{r}
 sumario = all_series %>%
@@ -111,8 +100,7 @@ all_series %>%
             mapping = aes(x = season, y = media), 
             color = "darkred", 
             size = 1.5)
-    
-# A ordem ta bagunçada
+#TODO: ajeitar a ordem 
 ``` 
 
 # 5 - Qual episódio de Strangers Things tem mais notas 0 e 10 ?
@@ -125,7 +113,8 @@ all_series %>%
     geom_point(aes(x = series_ep, y = r10), color = 'green') +
     scale_x_continuous(breaks = 1:18)
 
-# verde  = r10, vermelho = r1, como colocar isso no grafico
+# verde  = r10, vermelho = r1
+#TODO: Colocar legenda acima no grafico
 ```
 
 # 6 - Orange is the new black melhorou ou piorou com o tempo ?
@@ -135,7 +124,7 @@ R: O primeiro gráfico mostra a nota de cada episódio separado por temporada. �
 sumario = all_series %>%
     filter(series_name == "Orange Is the New Black") %>% 
     group_by(season) %>% 
-    summarise(median_series = mean(UserRating)) %>% 
+    summarise(median_series = median(UserRating)) %>% 
     glimpse()
 
 all_series %>%
@@ -149,8 +138,45 @@ sumario %>%
     geom_point(size = 7)
 ```
 
-# Aprofundando as questões ? e 6
-# 6 - Os episódios da melhor(4º) e pior(6º) temporada são muito diferentes em nota ? Existe uma diferença muito grande entre as duas temporadas com as melhores médias (2º e 6º) ? Será que a média foi realmente capaz de representar a 2º e 4º temporada ? 
+# Aprofundando as questões 3 e 6
+
+#3 - Existe alguma relação entre a duração de uma séries e sua qualidade ? Teoricamente uma série boa deveria durar mais pois suas chances de serem renovada é maior.
+    
+```{r}
+my_series <- c("A Anatomia de Grey",  "Black Mirror", "Stranger Things", "Sex and the City", "Avatar: A Lenda de Korra", "Orange Is the New Black", "House of Cards", "The Good Wife")
+
+sumario = all_series %>%
+    filter(series_name %in% my_series) %>%
+    group_by(series_name) %>%
+    summarise(median_series = median(UserRating), media = mean(UserRating))
+
+
+all_series %>% 
+    filter(series_name %in% my_series) %>% 
+    group_by(series_name) %>% 
+    ggplot(aes(x = series_name, y = UserRating, color = series_name)) + 
+    geom_point(alpha = .7) + 
+    theme(axis.text.x = element_text(angle = -60)) +
+    geom_point(data = sumario, 
+            mapping = aes(x = series_name, y = median_series), 
+            color = "black", 
+            size = 1.5) + 
+    geom_point(data = sumario, 
+            mapping = aes(x = series_name, y = media), 
+            color = "darkred", 
+            size = 1.5)
+
+
+all_series %>%
+    filter(series_name %in% my_series) %>%
+    group_by(series_name) %>% 
+    ggplot(aes(x = season_ep, y = series_name, color = series_name)) +
+    geom_line(size = 10 )
+```
+Não parece existir uma relação entre quanto maior a quantidade de espisódios de uma séria melhor sua avaliação. Por exemplo, a série Strager Things tem a melhor avaliação, porém é uma das menores, contando apenas com 2  temporadas. A Anatomia de Grey apesar se ser a série com maior quantidade de episódio não apresenta a melhor avaliação. Outro exemplo é a série The Good Wife que é a segunda maior serie, porém apresenta a segunda menor avalição. Qantidade não é qualidade. Provavelmente o fator determinante para a renovação de uma série deve ser somente a audiência.
+
+
+# 6 - Os episódios da melhor (4º) e pior (6º) temporada são muito diferentes em nota ? Existe uma diferença muito grande entre as duas temporadas com as melhores médias (2º e 6º) ? Será que a média foi realmente capaz de representar a 2º e 4º temporada ? 
 
 ```{r}
 all_series %>%
@@ -169,4 +195,4 @@ all_series %>%
 ```
 No primeiro gráfico: A 4º temporada supera em todos os episódio a 6º temporada, com exceção do 4º episódio que tem exatamente a mesma nota. Alguns episódio da 4º temporada são melhores com mais de 1 ponto de diferença. 
 
-No segunfo gráfico: Aqui pudemos observar que 5 de 13 episódio da 2º temporada são melhores que da 4º, enquanto 7 de 13 episódios da 4º são melhores que da 2º. Podemos concluir que a média foi uma representação da temporadas, apesar das mesmas apresentarem médias tão proxímas.
+No segundo gráfico: Aqui pudemos observar que 5 de 13 episódio da 2º temporada são melhores que da 4º, enquanto 7 de 13 episódios da 4º são melhores que da 2º. Podemos concluir que a média foi uma representação da qualidade dass temporadas, apesar das mesmas apresentarem médias tão proxímas.

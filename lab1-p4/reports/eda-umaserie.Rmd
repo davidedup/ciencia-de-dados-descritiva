@@ -1,0 +1,106 @@
+---
+title: "Lab 1, Parte 3"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+```{r}
+all_series = read_csv(here("data/series_from_imdb.csv.zip"), 
+                      col_types = "ccdcdcdddddddddddd") %>% 
+
+glimpse()
+```
+
+Estou usando o dataset de series, mais especificamente para as series GOT e Grey's Anatomy. 
+
+1º - O quanto notas 10 influenciam na nota? Notas ruins influenciam muito ou pouco na nota ? 
+Observando algumas linhas de dados comecei a perceber que a densidade de notas baixas (abaixo de 5) parece ser bem pequena para a maioria da series. Escolhi o escopo de GOT para ver se existe essa relação. 
+
+Ao verificar se as notas do episódio reflete na quantidade de notas 10 que o episódio recebe, podemos perceber que existe uma forte relação. Podemos observar no gráfico uma correlação quase que linear.
+Porém essa relação parece um tanto óbvia, aprofundando melhor fiz uma segunda análise.
+
+```{r}
+all_series %>%
+    filter(series_name == "Game of Thrones") %>%
+    summarise(
+    pearson = cor(r10, UserRating, method = "pearson"), 
+    spearman = cor(r10, UserRating, method = "spearman"), 
+    kendall = cor(r10, UserRating, method = "kendall")
+  )
+
+all_series %>%
+    filter(series_name == "Game of Thrones") %>%
+    ggplot(aes(x = r10, y = UserRating)) + 
+    geom_point()
+```
+
+Uma forma diferente de visualizar essa correlação é tentando ver o quanto notas baixas influenciam ou não na nota final. Tendo em vista que os números de r1 geralmente são bem pequenas, ou seja, quase ninguém da nota mínima em um episódio. Resolvi juntar todas as notas baixas em uma única variável assim somou-se r1, r2, r3, r4 e r5. Ao plotar o gráfico podemos observar uma correção não tão forte, mas ainda assim podemos ver que notas baixas não influenciam muito nas notas dos episódios, tendo em vista que a correlação foi negativa.
+
+
+```{r}
+got = all_series %>% 
+    filter(series_name == "Game of Thrones")
+
+got <- mutate(got, notas_baixas =  r1 + r2 + r3 + r4 + r5 )
+
+got %>% summarise(
+    pearson = cor(notas_baixas, UserRating, method = "pearson"), 
+    spearman = cor(notas_baixas, UserRating, method = "spearman"), 
+    kendall = cor(notas_baixas, UserRating, method = "kendall")
+  )
+
+got %>%
+    ggplot(aes(x = notas_baixas, y = UserRating)) + 
+    geom_point()
+
+```
+
+
+2º - Será que os episódios de Grey's Anatomy que tem mais avaliações tem as melhores ou piores notas ? 
+A ideia é que possivelmente episódios com muitos votos são odiados ou amados pelo público.
+
+```{r}
+all_series %>% 
+    filter(series_name == "A Anatomia de Grey") %>% 
+    summarise(
+    pearson = cor(UserVotes, UserRating, method = "pearson"), 
+    spearman = cor(series_ep, UserRating, method = "spearman"), 
+    kendall = cor(series_ep, UserRating, method = "kendall")
+    )
+
+all_series %>% 
+    filter(series_name == "A Anatomia de Grey") %>% 
+    ggplot(aes(x = UserVotes, y = UserRating)) + 
+    geom_point() 
+```
+
+Ao observar os coeficientes temos que não existe uma correlação entre a quantidade de votos e a nota.
+
+Como a serie tem uma quantidade muito grande de episódios tentei pegar apenas os que tem mais que a média de votos que é 675, porém mesmo fazendo esse filtro nos dados temos que a correlação entre quantidade de votos e nota é inexistente.
+
+Ainda, o gráfico parece não ter nenhum formato ou tendência o que leva a concluir que essa relação não existe.
+
+```{r}
+all_series %>% 
+    filter(series_name == "A Anatomia de Grey") %>% 
+    filter(UserVotes > 675) %>% 
+    summarise(
+    pearson = cor(UserVotes, UserRating, method = "pearson"), 
+    spearman = cor(series_ep, UserRating, method = "spearman"), 
+    kendall = cor(series_ep, UserRating, method = "kendall")
+    )
+```
+
+

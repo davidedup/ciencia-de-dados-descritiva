@@ -1,0 +1,83 @@
+---
+title: "LAB 01 - Parte 03 _ Pergunta 03"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+library(ggplot2)
+theme_set(theme_bw())
+```
+
+```{r}
+all_series = read_csv(here("/data/series_from_imdb.csv.zip"), 
+                      col_types = "ccdcdcdddddddddddd") 
+```
+
+
+## Pergunta 3
+# Como descobrir epsódios polemicos de uma série ?
+
+# Para tal avaliação, o conceito polêmico será calculado como o quão semelhantes são as proporções de avaliações de nota 1 (r1) e nota 10 (r10). 
+
+## Passo 1: Recolhendo os Dados de todos as temporadas da série Grey's Anatomy
+
+```{r}
+greys_anatomy_all_ep = all_series %>%
+     mutate(season = as.character(season)) %>%
+    filter(series_name == "A Anatomia de Grey")
+```
+
+```{r}
+greys_anatomy_all_ep %>% 
+  ggplot(mapping = aes(x = series_ep, y = UserRating, color = (season))) + 
+  geom_line() +
+    labs(title = "Distribuição linear das avaliações dos epsódios Grey's Anatomy", x = "Episódio da Série", y = "Avaliação do Usuário")
+  
+```
+# A partir da análise da distribuição das avaliações durante as temporadas, é perceptivel que a série possui avaliações com grande grau de destinção entre si. Como fonte de invertigação, foi escolhido a décima temparada para uma análise particular das proporções r1 e 10, dado que esta apresentou uma destribuição de epsódios nitidamente fora de um padrão.
+
+
+## Passo 2: Analisando a avaliação dos epsódios da 10 temporada
+
+```{r}
+greys_anatomy_s10 = greys_anatomy_all_ep %>%
+    filter(season == 10) 
+greys_anatomy_s10 %>%
+    ggplot(aes(x = series_ep, y = UserRating), color = "blue") +
+    geom_line()
+    labs(title = "Proporções r1 e r10 das avaliações dos epsódios da décima temporada de Grey's Anatomy",x = "Season Episode", y = "Rate", fill = "Rate")
+```
+
+```{r}
+greys_anatomy_s10 %>%
+    ggplot() +
+    geom_point(aes(x = season_ep, y = r1, color = "r1"),size = 4) +
+    geom_point(aes(x = season_ep, y = r10,color = "r10"), size = 4) +
+    labs(title = "Proporções r1 e r10 das avaliações dos epsódios da oitava temporada de Grey's Anatomy",x = "Season Episode", y = "Rate", fill = "Rate")
+```
+# Observando o gráfico de pontos, pode-se analisar visualmente que aqueles epsódios com grande divergencia de avaliações são aqueles cujos prontos r1 e r10 encontram-se próximos ou sobrepostos. Ampliando essa visão, podemos identificar epsódios polêmicos de forma geral para toda a série, a partir do cálculo do indice de divergencia dado por:
+#|r1 - r10| : onde quanto mais próximo de zero é a diferença, indica que houve grande divergencia de avaliações num epsódio.
+
+```{r}
+greys_anatomy_all_ep$indice_divergencia = abs(greys_anatomy_all_ep$r1 - greys_anatomy_all_ep$r10) 
+
+greys_anatomy_all_ep %>% 
+    mutate(season = as.character(season)) %>% 
+    ggplot() +
+    geom_line(mapping = aes(x = series_ep, y = r1, color = "r1"),size = 1) +
+    geom_line(mapping = aes(x = series_ep, y = r10, color = "r10"),size = 1) +
+    geom_point(aes(x = series_ep, y = indice_divergencia, color = "indice_divergencia"),size = 2) +
+    labs(title = "Proporções r1 e r10 juntamente com indice de divergencia das avaliações dos epsódios Grey's Anatomy", x = "Episódio da Série", y = "Rate")
+  
+```
+
+# No gráfico podemos visualizar que quando a linha verde (r1) cruza a linha azul (r10), o indice de divergencia é próximo de zero, o que indica a similariade das proporções entre r1 e r10, ou seja, divergencia entre os espectadores sobre o epsódio, identificando um "epsódio polêmico".

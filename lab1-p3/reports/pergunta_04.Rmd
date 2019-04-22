@@ -1,0 +1,52 @@
+---
+title: "Lab 1"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+
+
+```{r}
+all_series = read_csv(here("/data/series_from_imdb.csv.zip"), 
+                      col_types = "ccdcdcdddddddddddd") 
+```
+
+## Pergunta 4:
+Séries do Genero Drama tem duração parecida?
+
+# Passo 1: Filtrando os dados para séries de Drama, foi escolhido 10 séries
+```{r}
+dramas <- c("13 Reasons Why", "Better Call Saul", "Billions", "A Anatomia de Grey", "House of Cards", "Ozark", 
+                            "Ray Donovan", "Suits", "The Crown", "The Good Wife")
+drama_series = all_series %>% filter(series_name %in% dramas)
+```
+
+Agora que temos os dados filtrados podemos olhar melhor a duração das séries escolhidas, para isso podemos comparar o números de episódios delas ou de temporadas.
+
+# Passo 2: Gráficos de dispersão para número de episódios e temporadas de cada série
+
+O gráfico abaixo mostra para cada série (ponto) a quantidade de episódios pela quantidade de temporadas da mesma.
+
+```{r}
+drama_series %>% 
+  group_by(series_name, season) %>% 
+  summarise(episodios=n(), temporadas=max(season)) %>% 
+  summarise(episodios=sum(episodios), temporadas=max(season)) %>% 
+  ggplot(aes(x=temporadas, y=episodios, color=series_name)) +
+  geom_point()
+
+```
+
+Com o gráfico de dispersão acima, pode-ser ver que o numero a duração das séries de drama são bem espalhadas, onde a maioria das séries escolhidas tem número de temporadas diferentes e em que todas tem número de episódios diferentes, ou seja as séries de Drama não tem duração parecida. Não há uma relação entre a série ser de Drama e ter a mesma duração.

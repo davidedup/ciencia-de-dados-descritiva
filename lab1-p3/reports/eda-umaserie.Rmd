@@ -1,0 +1,169 @@
+---
+title: "Lab 1, Parte 3"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+## Grupo: André Gonçalves, Rafael Guerra, David Eduardo Pereira e Anne Arcanjo
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+```{r}
+all_series = read_csv(here("data/series_from_imdb.csv.zip"), 
+                      col_types = "ccdcdcdddddddddddd") 
+```
+
+# Pergunta 1: Orange Is The New Black piorou com o tempo ? Qual a melhor temporada ? Quanto os episódios de final de temporada distoam dos demais? 
+
+Para avaliar se a série pirou irei avaliar se as notas médias das temporadas diminuíram. 
+A melhor temporada é aquela que apresenta a melhor média. O quanto a nota de cada episódio de final de temporada destoa da nota média da temporada. 
+
+R: O primeiro gráfico mostra a nota de cada episódio separado por temporada. É visível que todo episódio de final de temporada tem uma nota maior que todos os episódios da temporada, ou seja, todo episódio final de temporada é amados pelo público. É difícil responder qual a melhor temporada olhando apenas para o primeiro gráfico porém a 4º temporada parece ser a melhor, inclusive nesta está o episódio mais bem votado de toda a série. Ao plotar as notas médias de cada temporada no segundo gráfico, as hipóteses são confirmadas a 4º apresenta a melhor nota. As temporadas apresentam um decaimento em sua média com excepção da 4º temporada, pudemos observar ainda no gráfico 1 que a série piorou com o tempo. Houve um decaimento em sua qualidade com o tempo. 
+No terceiro gráfico pudemos observar como todas as avaliações médias das temporadas estão abaixo de todos os episódios de final de temporada. Nesse gráfico fica mais claro o quanto cada episódio de final de temporada é melhor avaliado do que a temporada como um todo. 
+```{r}
+sumario = all_series %>%
+    filter(series_name == "Orange Is the New Black") %>% 
+    group_by(season) %>% 
+    summarise(mean_series = mean(UserRating), melhor_ep = max(UserRating))
+
+all_series %>%
+    filter(series_name == "Orange Is the New Black") %>% 
+    group_by(season) %>% 
+    mutate(media_temporada = mean(UserRating)) %>% 
+    ggplot(aes(x = series_ep, y = UserRating, color =  season)) +
+    geom_line() +
+    geom_line(aes(y = media_temporada), color = "grey") + 
+    labs(x = "Temporada", y = "Nota Média", color = "Temporada")
+
+sumario %>% 
+    ggplot(aes(x = season, y = mean_series, color = season)) +
+    geom_point(size = 7) + 
+    labs(x = "Temporada", y = "Nota Média", color = "Temporada")
+
+sumario %>% 
+    ggplot() +
+    geom_point(aes(x = season, y = melhor_ep, color = "Melhor episódio"), size = 7) +
+    geom_point(aes(x = season, y = mean_series, color = "Média da temporada"), size = 7) + 
+    labs(x = "Temporada", y = "Nota Média", color = "Temporada")
+    
+    
+```
+
+# Pergunta 2: Como a série Game of Thrones se comporta ao decorrer dos episódios? Existe alguma tendência?
+
+```{r}
+data_got = all_series %>% filter(series_name == "Game of Thrones") 
+```
+
+```{r}
+data_got %>% ggplot() + geom_line(mapping = aes(x = series_ep, y = UserRating, color = as.character(season))) + geom_point(mapping = aes(x = series_ep, y = UserRating, color = as.character(season))) + labs(x = "Episódios", y = "Notas dos Usuários", color = "Temporada", title = "Notas médias dos episódios de Game of Thrones")
+
+```
+
+É interessante notar que o último episódio de cada temporada da série tem notas melhores que o primeiro. Apesar disso, a série sofre muitas oscilações, especialmente a quinta temporada, onde houve o episódio mais criticado de toda série, juntamente com um dos mais bem avaliados. O gráfico a seguir mostra esse fato mais detalhadamente.
+
+```{r}
+polemic_season = data_got %>% filter(season == 5)
+
+polemic_season %>% ggplot(aes(x = r1, y = r10, label = as.character(season_ep))) + geom_text() + labs(title = "Proporção de notas 1 e 10 dos episódios da quinta temporada")
+```
+
+Aqui podemos observar que os 5 primeiros episódio desta temporada receberam notas mistas, devido ao fato deles estarem bem concentrados ao redor de um ponto. Nestes episódios, cerca de 40% das avaliações foram de notas 10, enquanto que aproximadamente 2,5% foram de notas 1. Para efeitos de comparação, no episódio 8, um dos mais bem avaliados de toda a série, cerca de 90% dos votos foram de notas 10, enquanto que pouco mais de 1,5% foi de notas 1
+
+## Pergunta 3: Como descobrir epsódios polemicos de uma série ?
+
+# Para tal avaliação, o conceito polêmico será calculado como o quão semelhantes são as proporções de avaliações de nota 1 (r1) e nota 10 (r10). 
+
+## Passo 1: Recolhendo os Dados de todos as temporadas da série Grey's Anatomy
+
+```{r}
+all_series = read_csv(here("/data/series_from_imdb.csv.zip"), 
+                      col_types = "ccdcdcdddddddddddd") 
+greys_anatomy_all_ep = all_series %>%
+     mutate(season = as.character(season)) %>%
+    filter(series_name == "A Anatomia de Grey")
+```
+
+```{r}
+greys_anatomy_all_ep %>% 
+  ggplot(mapping = aes(x = series_ep, y = UserRating, color = (season))) + 
+  geom_line() +
+    labs(title = "Distribuição linear das avaliações dos epsódios Grey's Anatomy", x = "Episódio da Série", y = "Avaliação do Usuário")
+  
+```
+# A partir da análise da distribuição das avaliações durante as temporadas, é perceptivel que a série possui avaliações com grande grau de destinção entre si. Como fonte de invertigação, foi escolhido a décima temparada para uma análise particular das proporções r1 e 10, dado que esta apresentou uma destribuição de epsódios nitidamente fora de um padrão.
+
+
+## Passo 2: Analisando a avaliação dos epsódios da 10 temporada
+
+```{r}
+greys_anatomy_s10 = greys_anatomy_all_ep %>%
+    filter(season == 10) 
+greys_anatomy_s10 %>%
+    ggplot(aes(x = series_ep, y = UserRating), color = "blue") +
+    geom_line()
+    labs(title = "Proporções r1 e r10 das avaliações dos epsódios da décima temporada de Grey's Anatomy",x = "Season Episode", y = "Rate", fill = "Rate")
+```
+
+```{r}
+greys_anatomy_s10 %>%
+    ggplot() +
+    geom_point(aes(x = season_ep, y = r1, color = "r1"),size = 4) +
+    geom_point(aes(x = season_ep, y = r10,color = "r10"), size = 4) +
+    labs(title = "Proporções r1 e r10 das avaliações dos epsódios da oitava temporada de Grey's Anatomy",x = "Season Episode", y = "Rate", fill = "Rate")
+```
+# Observando o gráfico de pontos, pode-se analisar visualmente que aqueles epsódios com grande divergencia de avaliações são aqueles cujos prontos r1 e r10 encontram-se próximos ou sobrepostos. Ampliando essa visão, podemos identificar epsódios polêmicos de forma geral para toda a série, a partir do cálculo do indice de divergencia dado por:
+# |r1 - r10| : onde quanto mais próximo de zero é a diferença, indica que houve grande divergencia de avaliações num epsódio.
+
+```{r}
+greys_anatomy_all_ep$indice_divergencia = abs(greys_anatomy_all_ep$r1 - greys_anatomy_all_ep$r10) 
+greys_anatomy_all_ep %>% 
+    mutate(season = as.character(season)) %>% 
+    ggplot() +
+    geom_line(mapping = aes(x = series_ep, y = r1, color = "r1"),size = 1) +
+    geom_line(mapping = aes(x = series_ep, y = r10, color = "r10"),size = 1) +
+    geom_point(aes(x = series_ep, y = indice_divergencia, color = "indice_divergencia"),size = 2) +
+    labs(title = "Proporções r1 e r10 juntamente com indice de divergencia das avaliações dos epsódios Grey's Anatomy", x = "Episódio da Série", y = "Rate")
+  
+```
+
+# No gráfico podemos visualizar que quando a linha verde (r1) cruza a linha azul (r10), o indice de divergencia é próximo de zero, o que indica a similariade das proporções entre r1 e r10, ou seja, divergencia entre os espectadores sobre o epsódio, identificando um "epsódio polêmico".
+
+# Pergunta 4: Séries do Genero Drama tem duração parecida?
+
+## Passo 1: Filtrando os dados para séries de Drama, foi escolhido 10 séries
+```{r}
+dramas <- c("13 Reasons Why", "Better Call Saul", "Billions", "A Anatomia de Grey", "House of Cards", "Ozark", 
+                            "Ray Donovan", "Suits", "The Crown", "The Good Wife")
+drama_series = all_series %>% filter(series_name %in% dramas)
+```
+
+Agora que temos os dados filtrados podemos olhar melhor a duração das séries escolhidas, para isso podemos comparar o números de episódios delas ou de temporadas.
+
+## Passo 2: Gráficos de dispersão para número de episódios e temporadas de cada série
+
+O gráfico abaixo mostra para cada série (ponto) a quantidade de episódios pela quantidade de temporadas da mesma.
+
+```{r}
+drama_series %>% 
+  group_by(series_name, season) %>% 
+  summarise(episodios=n(), temporadas=max(season)) %>% 
+  summarise(episodios=sum(episodios), temporadas=max(season)) %>% 
+  ggplot(aes(x=temporadas, y=episodios, color=series_name)) +
+  geom_point()
+
+```
+
+Com o gráfico de dispersão acima, pode-ser ver que o numero a duração das séries de drama são bem espalhadas, onde a maioria das séries escolhidas tem número de temporadas diferentes e em que todas tem número de episódios diferentes, ou seja as séries de Drama não tem duração parecida. Não há uma relação entre a série ser de Drama e ter a mesma duração.
+
+

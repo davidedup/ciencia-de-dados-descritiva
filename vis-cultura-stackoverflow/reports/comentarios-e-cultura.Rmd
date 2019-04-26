@@ -86,10 +86,12 @@ dados %>%
 Inclua o continente dos países (`six_regions`) na visualização.
 
 ```{r}
+
 dados %>% 
+    na.omit(six_regions) %>% 
     ggplot(aes(x = PDI, y = comentaram_prop, color = Internet, size = usuarios, shape = six_regions) ) +
     geom_point() +
-    facet_wrap(~ site)
+    facet_wrap(~ six_regions)
 ```
 
 

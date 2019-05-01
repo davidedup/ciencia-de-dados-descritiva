@@ -42,12 +42,14 @@ Considerando essa variável, queremos examinar a relação entre ela e o quão h
 ## Examinando essa relação
 
 Faça uma visualização que usa os princípios de eficácia no projeto de visualizações para facilitar as comparações que você acha que são as mais importantes para entendermos esse contexto. 
-```{r}
+```{r fig.height=5, fig.width=10}
 dados %>% 
-    ggplot(aes(x = PDI, y = comentaram_prop, color = Internet, size = usuarios) ) +
+    ggplot(aes(y = PDI, x = comentaram_prop, color = Internet, size = usuarios) ) +
     geom_point() +
     facet_wrap(~ site)
 ```
+
+No gráfico podemos observar que os países com mais internet parecem apresentar uma proporção de comentarios maior. Os pontos mais claros parecem estar concentrados mais abaixo no gráfico, com algumas exceções. E os mais escuros mais acima. Os países com maior PDI parecem apresentar um menor acesso a internet assim como menos comentários.
 
 ## Outras formas de ver
 
@@ -60,11 +62,15 @@ dados %>%
     facet_wrap(~ site)
 ```
 
+Como as disparidades nos dados de usuarios é muito grande, fica difícil de vizualizar sem uma trasnformação. Colocar esse dado no eixo x não parece ser uma boa escolha.
+
 ```{r}
 dados %>% 
     ggplot(aes(x = usuarios, y = Internet, color = PDI, size = comentaram_prop) ) +
     geom_point() 
 ```
+
+Mesmo tirando o recurso que ajuda a vizualizar melhor os sites distindos a vizualização continua prejudicada
 
 ```{r}
 dados %>% 
@@ -72,24 +78,34 @@ dados %>%
     geom_point() 
 ```
 
+Aqui não é possivel distinguir as cores e suas variações de tons, os pontos parecem estar todos com a mesma cor.
 
 ```{r}
 dados %>% 
     ggplot(aes(x = usuarios, y = Internet, color = PDI, size = comentaram_prop) ) +
-    geom_point() +
+    geom_col() 
+```
+
+O gráfico de barras não se mostra bom para os dados em questão
+
+```{r}
+dados %>% 
+    ggplot(aes(y = PDI, x = comentaram_prop, color = Internet, size = usuarios) ) +
+    geom_col() +
     facet_wrap(~ site)
 ```
 
+Mesmo usando a mesma 'distribuição' da primeira vizualização o gráfico de barras não parece bom.   
 
 ## Bônus
 
 Inclua o continente dos países (`six_regions`) na visualização.
 
-```{r}
+```{r fig.height=7, fig.width=10}
 
 dados %>% 
     na.omit(six_regions) %>% 
-    ggplot(aes(x = PDI, y = comentaram_prop, color = Internet, size = usuarios, shape = six_regions) ) +
+    ggplot(aes(x = PDI, y = comentaram_prop, color = Internet, size = usuarios, shape =  site)) +
     geom_point() +
     facet_wrap(~ six_regions)
 ```

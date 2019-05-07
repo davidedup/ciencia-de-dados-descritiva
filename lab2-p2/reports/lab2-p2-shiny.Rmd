@@ -1,0 +1,220 @@
+---
+title: "LAB2-P2 : Anne Arcanjo & David Eduardo"
+runtime: shiny
+output: 
+    html_document:
+        code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Importando bibliotecas:
+```{r}
+library(tidyverse)
+library(here)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(shiny)
+```
+
+Importando dataset:
+```{r}
+enade_ccc = read_csv(here("/data/enade-ccc-2017.csv"), col_types = "cccdccdddc")
+```
+
+### Ajustes dos dados para auxiliar na elaboração das visualizações
+Calcula média de cada categoria para todos os estados:
+```{r}
+categoria_por_uf_ALDT = enade_ccc %>%
+    filter(categoria == "Aprendizagem além do técnico") %>%
+    group_by(UF) %>% summarise(media_aprendizagem=mean(media)) 
+
+categoria_por_uf_CEG = enade_ccc %>%
+    filter(categoria == "Curso em geral") %>%
+    group_by(UF) %>% summarise(media_curso=mean(media)) 
+
+categoria_por_uf_EAA = enade_ccc %>%
+    filter(categoria == "Ensino, apoio e avaliacão") %>%
+    group_by(UF) %>% summarise(media_eaa=mean(media)) 
+
+categoria_por_uf_INFRA = enade_ccc %>%
+    filter(categoria == "Infraestrutura") %>%
+    group_by(UF) %>% summarise(media_infraestrutura=mean(media)) 
+
+categoria_por_uf_OUTROS = enade_ccc %>%
+    filter(categoria == "Outros") %>%
+    group_by(UF) %>% summarise(media_outros=mean(media)) 
+```
+
+Calculando médias de cada categoria por região: 
+```{r}
+media_geral_uf = enade_ccc %>%
+    group_by(UF) %>% summarise(media_geral=mean(media))
+
+regioes <- c("Norte", "Nordeste", "Nordeste", "Centro-oeste", "Centro-oeste", "Nordeste", "Centro-oeste","Nordeste", "Nordeste", "Nordeste", "Sul", "Sudeste", "Sul","Sul","Sudeste")
+
+media_geral_uf$regiao = regioes
+media_geral_uf$media_ALDT = categoria_por_uf_ALDT$media_aprendizagem
+media_geral_uf$media_CEG = categoria_por_uf_CEG$media_curso
+media_geral_uf$media_EAA = categoria_por_uf_EAA$media_eaa
+media_geral_uf$media_INFRA = categoria_por_uf_INFRA$media_infraestrutura
+
+media_geral_uf = media_geral_uf %>% arrange(media_geral)
+
+media_geral_uf$UF <- factor(media_geral_uf$UF, levels = media_geral_uf$UF[order(media_geral_uf$media_geral)])
+
+
+aval_regiao = media_geral_uf %>%
+    group_by(regiao) %>% summarise(media_ALDT=mean(media_ALDT), media_CEG=mean(media_CEG), media_EAA=mean(media_EAA), media_INFRA=mean(media_INFRA))
+
+```
+
+
+## 1. Média geral de cada estado e médias de suas categorias:
+### A visualização mostra, para cada estado, a distribuição da média das médias de todas as categorias, sendo possível observar a média de cada categoria individualmente pela passagem do cursor na barra desejada.
+```{r}
+ui <- fluidPage(
+  plotlyOutput("plot"),
+  verbatimTextOutput("event")
+)
+
+server <- function(input, output) {
+
+  # renderPlotly() also understands ggplot2 objects!
+  output$plot <- renderPlotly({
+    
+      plot_ly(media_geral_uf, x = ~UF, y = ~media_geral, color=~UF,  type = 'bar', name = ~UF,
+            text = ~paste('Media Geral', media_geral,'\nAprendizagem além do técnico:', media_ALDT, '\nCurso em geral:', media_CEG, '\nEnsino, apoio e avaliação:', media_EAA, '\nInfraestrutura:', media_INFRA)) %>%
+  layout(title = "Média Geral das Categorias por Estado",
+         xaxis = list(title = "UF", tickangle = -45),
+         yaxis = list(title = "Média Geral das Categorias"),
+         margin = list(b = 100),
+         barmode = 'group')
+  })
+
+  output$event <- renderPrint({
+    d <- event_data("plotly_hover")
+    if (is.null(d)) "Hover on a point!" else d
+  })
+}
+
+shinyApp(ui, server)
+```
+
+
+## 2. Visualização interativa das categorias para uma região:
+### A partir da selação da região desejada, é possível analizar a média das médias de cada categoria dos estados pertencentes a uma região do Brasil
+```{r width = 10, height = 5000}
+selectInput("regiao",
+            "Região",
+            choices = c("Nordeste", "Centro-oeste", "Sul", "Sudeste", "Norte"))
+
+renderPlot({
+    regiao_plot = aval_regiao %>% filter(regiao == input$regiao)
+
+    dat <-  data.frame(
+        medias_regiao <- c(regiao_plot$media_ALDT, regiao_plot$media_CEG, regiao_plot$media_EAA,regiao_plot$media_INFRA),
+        categorias <- c("Aprendizado Além do Tecnico", "Curso em Geral", "Ensino Apoio Avaliação", "Infraestrutura")
+    )
+
+    ggplot(data=dat, aes(x = categorias, y = medias_regiao, color = categorias, fill = categorias)) +
+        geom_bar(stat="identity")+
+      labs(title = "Média das Categorias por Região do Brasil", x = "Categorias", y = "Média Geral")
+})
+```
+
+
+## 3. Visualização de todas as regiões e suas médias em cada categoria:
+### Propõe a visualização dos mesmos dados da anteriormente apresentada, contudo, é possível observar as categorias de todas as regiões simultaneamente
+```{r}
+ui <- fluidPage(
+  plotlyOutput("plot"),
+  verbatimTextOutput("event")
+)
+
+server <- function(input, output) {
+
+  # renderPlotly() also understands ggplot2 objects!
+  output$plot <- renderPlotly({
+    plot_ly(aval_regiao, x = ~regiao, y = ~media_ALDT, type = 'bar', name = 'Aprendizagem além do técnico',
+        marker = list(color = 'rgb(153, 153, 130)')) %>%
+  add_trace(y = ~media_CEG, name = 'Curso em geral', marker = list(color = 'rgb(255, 153, 102)')) %>%
+  add_trace(y = ~media_EAA, name = 'Ensino, apoio e avaliação', marker = list(color = 'rgb(255, 153, 153)')) %>%
+  add_trace(y = ~media_INFRA, name = 'Infraestrutura', marker = list(color = 'rgb(204, 204, 255)')) %>%
+  layout(title = 'Média das Categorias por Região',
+         xaxis = list(
+           title = "Região do Brasil",
+           tickfont = list(
+             size = 14,
+             color = 'rgb(1, 1, 1)')),
+         yaxis = list(
+           title = 'Média da Categoria',
+           titlefont = list(
+             size = 16,
+             color = 'rgb(1, 1, 1)'),
+           tickfont = list(
+             size = 14,
+             color = 'rgb(1, 1, 1)')),
+         legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)', bordercolor = 'rgba(255, 255, 255, 0)'),
+         barmode = 'group', bargap = 0.25, bargroupgap = 0.2)
+  })
+
+  output$event <- renderPrint({
+    d <- event_data("plotly_hover")
+    if (is.null(d)) "Hover on a point!" else d
+  })
+}
+
+shinyApp(ui, server)
+```
+
+## Visualização da média das médias das categorias para cada IES:
+```{r}
+medias_IES = enade_ccc %>% 
+    group_by(IES) %>% 
+    summarise(media_IES = mean(media)) %>% 
+  arrange(media_IES)
+
+medias_IES$IES <- factor(medias_IES$IES, levels = medias_IES$IES[order(medias_IES$media_IES)])
+
+```
+
+
+```{r}
+ui <- fluidPage(
+  plotlyOutput("plot"),
+  verbatimTextOutput("event")
+)
+
+server <- function(input, output) {
+
+  # renderPlotly() also understands ggplot2 objects!
+  output$plot <- renderPlotly({
+    
+       plot_ly(medias_IES, x = ~media_IES, y = ~IES) %>%
+  add_trace(x = ~media_IES, name = "Men",type = 'scatter',
+            mode = "markers", marker = list(color = "blue"))  %>%
+  layout(title = 'Média Geral das Categorias por IES',
+         xaxis = list(
+           title = "Média das Médias das Categorias",
+           tickfont = list(
+             size = 14,
+             color = 'rgb(1, 1, 1)')),
+         yaxis = list(
+           title = 'Instituição de Ensino Superior - IES',
+           titlefont = list(
+             size = 16,
+             color = 'rgb(1, 1, 1)')))
+  })
+
+  output$event <- renderPrint({
+    d <- event_data("plotly_hover")
+    if (is.null(d)) "Hover on a point!" else d
+  })
+}
+
+shinyApp(ui, server)
+```

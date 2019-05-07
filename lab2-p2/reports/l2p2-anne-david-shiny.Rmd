@@ -1,0 +1,136 @@
+---
+title: "Relatório Interativo : LAB2-PARTE2 "
+author: "Anne Gabriele, David Eduardo"
+output:
+        html_document:
+            code_folding: "hide"
+            theme: sandstone
+runtime: shiny
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(shiny)
+library(tidyverse)
+library(here)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+theme_set(theme_bw())
+```
+
+```{r}
+enade_ccc = read_csv(here("/data/enade-ccc-2017.csv"), col_types = "cccdccdddc")
+```
+#1. Visualização interativa da Média Geral das Categorias por Estado
+
+## Vetores com os estados brasileiros por região
+```{r}
+regiao_norte = c("AC", "RO", "AM", "RR", "PA", "AP", "TO") 
+regiao_nordeste = c("MA", "CE", "PI", "BA", "SE", "AL", "PE", "PB", "RN")
+regiao_centroeste = c("MT", "DF", "MS", "GO")
+regiao_sudeste = c("MG", "ES", "RJ", "SP")
+regiao_sul = c("PR", "SC", "RS")
+```
+
+## Calcula a media das medias de uma categoria por estado
+```{r}
+categoria_por_uf_ALDT = enade_ccc %>%
+    filter(categoria == "Aprendizagem além do técnico") %>%
+    group_by(UF) %>% summarise(media_aprendizagem=mean(media)) 
+
+categoria_por_uf_CEG = enade_ccc %>%
+    filter(categoria == "Curso em geral") %>%
+    group_by(UF) %>% summarise(media_curso=mean(media)) 
+
+categoria_por_uf_EAA = enade_ccc %>%
+    filter(categoria == "Ensino, apoio e avaliacão") %>%
+    group_by(UF) %>% summarise(media_eaa=mean(media)) 
+
+categoria_por_uf_INFRA = enade_ccc %>%
+    filter(categoria == "Infraestrutura") %>%
+    group_by(UF) %>% summarise(media_infraestrutura=mean(media)) 
+
+categoria_por_uf_OUTROS = enade_ccc %>%
+    filter(categoria == "Outros") %>%
+    group_by(UF) %>% summarise(media_outros=mean(media)) 
+```
+
+## Dataframe adaptado para a visualização
+```{r}
+media_geral_uf = enade_ccc %>%
+    group_by(UF) %>% summarise(media_geral=mean(media))
+
+regioes <- c("Norte", "Nordeste", "Nordeste", "Centro-oeste", "Centro-oeste", "Nordeste", "Centro-oeste","Nordeste", "Nordeste", "Nordeste", "Sul", "Sudeste", "Sul","Sul","Sudeste")
+
+media_geral_uf$regiao = regioes
+media_geral_uf$media_ALDT = categoria_por_uf_ALDT$media_aprendizagem
+media_geral_uf$media_CEG = categoria_por_uf_CEG$media_curso
+media_geral_uf$media_EAA = categoria_por_uf_EAA$media_eaa
+media_geral_uf$media_INFRA = categoria_por_uf_INFRA$media_infraestrutura
+
+media_geral_uf <- media_geral_uf[order(media_geral_uf$media_geral),]
+
+```
+## Inputs and Outputs
+## https://plot.ly/r/shiny-coupled-events/ exemplo base
+```{r}
+ # Cria plot com os estados de acordo com a região
+    output$Plot <- renderPlotly({
+
+        media_geral_regiao = media_geral_uf %>%
+            filter(regiao == input$regiao ) %>%
+            plot_ly(media_geral_uf, x = ~UF, y = ~media_geral, color=~UF,  type = 'bar', name = ~UF,
+            text = ~paste('Media Geral', media_geral,'\nAprendizagem além do técnico:', media_ALDT, '\nCurso em geral:', media_CEG, '\nEnsino, apoio e avaliação:', media_EAA, '\nInfraestrutura:', media_INFRA)) %>%
+  layout(title = "Média Geral das Categorias por Estado",
+         xaxis = list(title = "UF", tickangle = -45),
+         yaxis = list(title = "Média Geral das Categorias"),
+         margin = list(b = 100),
+         barmode = 'group')
+    })
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+selectInput("regiao", label = "Estados Selecionados:",
+              choices = c("Todos", "Norte", "Nordeste", "Centro-oeste", "Sudeste", "Sul"), selected = "Todos")
+```
+
+
+```{r}
+ui <- fluidPage(
+  plotlyOutput("plot"),
+  verbatimTextOutput("event")
+)
+
+server <- function(input, output) {
+
+  # renderPlotly() also understands ggplot2 objects!
+  output$plot <- renderPlotly({
+      media_geral_regiao = media_geral_uf %>%filter(regiao == input$regiao )
+    plot_ly(media_geral_regiao, x = ~UF, y = ~media_geral, color=~UF,  type = 'bar', name = ~UF,
+            text = ~paste('Media Geral', media_geral,'\nAprendizagem além do técnico:', media_ALDT, '\nCurso em geral:', media_CEG, '\nEnsino, apoio e avaliação:', media_EAA, '\nInfraestrutura:', media_INFRA)) %>%
+  layout(title = "Média Geral das Categorias por Estado",
+         xaxis = list(title = "UF", tickangle = -45),
+         yaxis = list(title = "Média Geral das Categorias"),
+         margin = list(b = 100),
+         barmode = 'group')
+  })
+    output$event <- renderPrint({
+    d <- event_data("plotly_hover")
+    if (is.null(d)) "Hover on a point!" else d
+  })
+}
+
+shinyApp(ui, server)
+  
+```

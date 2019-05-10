@@ -1,0 +1,24 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(plotly)
+
+x <- c('Feature A', 'Feature B', 'Feature C', 'Feature D', 'Feature E')
+y <- c(20, 14, 23, 25, 22)
+data <- data.frame(x, y)
+
+p <- plot_ly(data, x = ~x, y = ~y, type = 'bar', color = I("black")) %>%
+  layout(title = "Features",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""))
+
+# Create a shareable link to your chart
+# Set up API credentials: https://plot.ly/r/getting-started
+chart_link = api_create(p, filename="bar-color")
+chart_link
+```
+

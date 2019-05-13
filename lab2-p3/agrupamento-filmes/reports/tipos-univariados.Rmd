@@ -1,17 +1,24 @@
 ---
-title: "Tipos de filme de FULANO(A)"
+title: "Tipos de filme de Jennifer Lawrence"
 output:
     html_document:
-    df_print: paged
+        df_print: paged
+        code_folding: "hide"
 theme: sandstone
 ---
 
+### JENNIFER LAWRENCE
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
+#Importando bibliotecas
 library(tidyverse)
 library(here)
 library(cluster)
 library(plotly)
 library(ggdendro)
+library(broom)
+library(ggpubr)
+library(ggrepel)
 
 source(here::here("code/lib.R"))
 theme_set(theme_report())
@@ -29,44 +36,45 @@ paleta = c("#404E4D",
 ```
 
 ```{r}
-## ANTES DE USAR
-# Para criar data/movies.csv
-import_data("jennifer_lawrence") # ou com o ator/atriz que você escolher
+#Montando dataset
+import_data("jennifer_lawrence")
 ```
 
 
 ```{r read}
+#Importando Dataset 
 filmes = read_imported_data() %>% 
     glimpse()
 ```
 
-## Jennifer Lawrence é uma atriz norte-america que nasceu em Louisville no estado do Kentucky. Nascida em 1190 (28 anos) a atriz já ganhou diversos prêmios inclusive dois Orcars. 
+## Jennifer Lawrence é uma atriz norte-america que nasceu em Louisville no estado do Kentucky. Nascida em 1990 (28 anos) a atriz já ganhou diversos prêmios, inclusive dois Orcars. 
+
 
 ```{r}
-#https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html
+p <- plot_ly(filmes, x = ~ano, y = ~bilheteria,  type = 'pointcloud',
+            text = ~paste('Filme: ', filme, "\nAvalicao: ", avaliacao, "\nBilheteria: ", bilheteria, "\nAno:", ano)) %>%
+  layout(title = "Linha do tempo: Carreira da Jennifer",
+         xaxis = list(title = "Avaliação", tickangle = -45),
+         yaxis = list(title = "Bilheteria"))
 
-p = filmes %>% 
-    ggplot(aes(x = as.character(ano), y = bilheteria, color = avaliacao)) + 
-    geom_point(alpha = .5, size  = 5) +
-    labs( x = "Ano", y = "Bilheteria", title = "Linha do tempo", color = "Avaliação")
-
-ggplotly(p)
-
+p
 ```
 
-## Na visualização acima podemos ver que Jennifer começou sua carreira em 2010 com o filme Winter's Bone. Suas melhores bilheterias foram com os filmes das sagas Jogos Vorzaes e X-men
+## Na visualização acima podemos ver que Jennifer começou sua carreira em 2010 com o filme Winter's Bone. Suas melhores bilheterias foram com os filmes das sagas Jogos Vorazes e X-men.
+* Passe o mouse sobre os pontos para visualizar mais informações sobre os filmes.
 
 
-## Antes de realizar os agrupamentos precisamos normalizar os dados, irei normalizar bilheteria e avalicao que são os dados mais discrepantes
-## Foi utilizado o logo pos os dados de bilheteria são bem diferentes
+## Antes de realizar os agrupamentos precisamos normalizar os dados, irei normalizar bilheteria e avalição que são os dados mais discrepantes.
+## Foi utilizado o 'log' nos dados de bilheteria já que são valores bem diferentes e grandes.
+
 ```{r}
 filmes_transformado = filmes %>% 
     mutate(avaliacao = as.vector(scale(avaliacao)), 
             bilheteria = as.vector(scale(log(bilheteria))))
 ```
 
-## Vamos agora agrupar os filmes em que Jennifer apareceu.
-## Para começar iremos precisar descobrir em quantos grupos devemos realizar o agrumamento. Vamos calcular a estatistíca GAP que irá auxiliar na escolha.
+## Vamos agora agrupar os filmes em que Jennifer apareceu:
+## Primeiramente iremos precisar descobrir em quantos grupos devemos realizar o agrumamento. Vamos calcular a estatistíca GAP que irá auxiliar na escolha.
 
 ```{r}
 plot_clusgap = function(clusgap, title = "Gap Statistic calculation results") {
@@ -82,129 +90,94 @@ plot_clusgap = function(clusgap, title = "Gap Statistic calculation results") {
 ```{r}
 gaps <- filmes_transformado %>% 
     select(bilheteria, avaliacao) %>% 
-    clusGap(FUN = kmeans, nstart = 20, K.max = 8, B = 200)
+    clusGap(FUN = kmeans, nstart = 20, K.max = 7, B = 200)
 
 plot_clusgap(gaps)
 ```
 
-## Olhando o gráfico acima podemos perceber que o GAP esta propondo que o melhor valor para o agrupamento é 7.  
+## Olhando o gráfico acima podemos perceber que o GAP esta propondo que o melhor valor para o agrupamento é 7 ou 3.  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Descrição
-
+## Agrupamento com 3 não parece ser muito expressivo. Os grupos parecem muito amplos
 ```{r}
-filmes %>% 
-    ggplot(aes(x = avaliacao, y = bilheteria)) + 
-    geom_point(size = 4, color = paleta[1]) 
+set.seed(12345)
+
+n_clusters = 3
+# O agrupamento de fato:
+km = filmes_transformado %>% 
+    select(bilheteria, avaliacao) %>% 
+    kmeans(centers = n_clusters, nstart = 20)
+
+agrupado = km %>% 
+    augment(filmes_transformado)
+
+
+agrupado %>% 
+    ggplot(aes(x = avaliacao, y = bilheteria, color = .cluster))  + 
+    geom_point(size = 2)
 ```
 
-
-
+## O agrupamento com 7 parece fazer mais sentido e parece melhor agrupar os filmes
 ```{r}
-filmes %>% 
-    ggplot(aes(x = bilheteria)) + 
-    geom_histogram(binwidth = 15, fill = paleta[2], color = "black") + 
-    geom_rug(size = .5) 
-```
+set.seed(12345)
 
-```{r}
-filmes %>% 
-    ggplot(aes(x = avaliacao)) + 
-    geom_histogram(binwidth = 10, boundary = 0, fill = paleta[3], color = "black") + 
-    geom_rug(size = .5) 
-```
+n_clusters = 7
+# O agrupamento de fato:
+km = filmes_transformado %>% 
+    select(bilheteria, avaliacao) %>% 
+    kmeans(centers = n_clusters, nstart = 20)
 
-## Estrutura de grupos?
-
-```{r}
-p = filmes %>% 
-    ggplot(aes(x = "", y = bilheteria, label = filme)) + 
-    geom_jitter(width = .05, alpha = .3, size = 3) + 
-    labs(x = "")
-
-ggplotly(p)
-```
-
-## Agrupamento hierárquico
-
-```{r}
-agrupamento_h = filmes %>% 
-    mutate(nome = paste0(filme, 
-                         " (av=", 
-                         avaliacao, 
-                         ")")) %>% 
-    as.data.frame() %>% 
-    column_to_rownames("filme") %>% 
-    select(avaliacao) %>%
-    dist(method = "euclidian") %>% 
-    hclust(method = "complete")
-
-ggdendrogram(agrupamento_h, rotate = T, size = 2, theme_dendro = F) + 
-    labs(y = "Dissimilaridade", x = "", title = "Dendrograma")
-```
-
-```{r}
-get_grupos <- function(agrupamento, num_grupos){
-    agrupamento %>% 
-        cutree(num_grupos) %>% 
-        as.data.frame() %>% 
-        mutate(label = rownames(.)) %>% 
-        gather(key =  "k", value = "grupo", -label) %>% 
-        mutate(grupo = as.character(grupo))
-}
-
-atribuicoes = get_grupos(agrupamento_h, num_grupos = 1:6)
-
-atribuicoes = atribuicoes %>% 
-    left_join(filmes, by = c("label" = "filme"))
-
-atribuicoes %>% 
-    ggplot(aes(x = "Filmes", y = avaliacao, colour = grupo)) + 
-    geom_jitter(width = .02, height = 0, size = 1.6, alpha = .6) + 
-    facet_wrap(~ paste(k, " grupos")) + 
-    scale_color_brewer(palette = "Dark2")
+agrupado = km %>% 
+    augment(filmes_transformado)
 
 ```
 
+## Cluster interativo, passe o mouse sobre os pontos para ver informações sobre o filme.
 ```{r}
-k_escolhido = 3
+p <- plot_ly(agrupado, x = ~avaliacao, y = ~bilheteria, color=~.cluster,  type = 'pointcloud',
+            text = ~paste('Filme: ', filme, "\nAvalicao: ", avaliacao, "\nBilheteria: ", bilheteria, "\nAno:", ano)) %>%
+  layout(title = "Clusters",
+         xaxis = list(title = "Avaliação", tickangle = -45),
+         yaxis = list(title = "Bilheteria"))
 
-atribuicoes %>% 
-    filter(k == k_escolhido) %>% 
-    ggplot(aes(x = reorder(label, avaliacao), y = avaliacao, colour = grupo)) + 
-    geom_jitter(width = .02, height = 0, size = 3, alpha = .6) + 
-    facet_wrap(~ paste(k, " grupos")) + 
-    scale_color_brewer(palette = "Dark2") + 
-    labs(x = "", y = "Avaliação RT") + 
-    coord_flip() 
+p
 ```
+
+
+## Visualizando os grupos através de polígonos
+```{r}
+ggscatter(agrupado, x="avaliacao", y="bilheteria", color=".cluster")+
+    stat_chull(aes(fill = .cluster), alpha=0.3, geom="polygon")+
+    xlab("Avaliação")+
+    ylab("Bilheteria")
+
+```
+
+## Investigando as características dos grupos.
+### 1 - "Bilheteria mediana com péssima qualidade" - Este grupo é formado por apenas um filme. Este tem a pior avaliação dentre os filmes de Jennifer, tem uma nota 11  no Rotten Tomatoes. 
+### 2 - "Flops com um pouco de qualidade" - Aqui temos filmes que não fizeram tanto sucesso e tiveram baixa bilheteria, mas apresentam uma avaliação OK.
+### 3 - "Auges de qualidade, porém um pouco flops" - Nesse grupo estão os filmes de melhor qualidade de Jennifer, mas não tiveram grande bilheteria. Um desses filmes rendeu a ela diversos prêmios, incluindo um Oscar.
+### 4 - "Hits de maior qualidade da Jennifer" - Este grupo parace ser composto por filmes que tiveram grande bilheteria e boa avaliação. Entre eles estão 2 filmes da saga Jogo Vorazes e dois X-men. Os outros dois do grupo que apresentam menor bilheteria são filmes de drama, entre eles esta "Silver Linings Playbook" com o qual Jennifer ganhou um Orcar. 
+### 5 - "Os jogos vorazes não tão bons" - Aqui foram agrupados os dois primeiros filmes dos jogos vorazes. Possuem uma grande quantidade de bilheteria devido a característica de serem filmes inspirados em uma famosa saga de livros, porém a qualidade não é tão boa quanto o do grupo 4.
+### 6 - "Hits de baixa qualidade" - Aqui temos os filmes que Jennifer fez que teve grande hype por isso os altos valores de bilheteria, porém as avaliações não foram tão positivas.
+### 7 - "Neutros" - Aqui temos os filmes que não se tiveram valores chamativos nem de bilheteria nem de avaliação.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

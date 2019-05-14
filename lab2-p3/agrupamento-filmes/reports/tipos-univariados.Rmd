@@ -145,7 +145,7 @@ p
 
 ## Visualizando os grupos através de polígonos
 ```{r}
-ggscatter(agrupado, x="avaliacao", y="bilheteria", color=".cluster")+
+ ggscatter(agrupado, x="avaliacao", y="bilheteria", color=".cluster")+
     stat_chull(aes(fill = .cluster), alpha=0.3, geom="polygon")+
     xlab("Avaliação")+
     ylab("Bilheteria")

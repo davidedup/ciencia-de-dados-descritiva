@@ -47,34 +47,54 @@ filmes = read_imported_data() %>%
     glimpse()
 ```
 
-## Jennifer Lawrence é uma atriz norte-america que nasceu em Louisville no estado do Kentucky. Nascida em 1990 (28 anos) a atriz já ganhou diversos prêmios, inclusive dois Orcars. 
+# Quem é Jennifer Lawrence ?
+
+```{r pressure, echo=FALSE, out.width = '50%'}
+knitr::include_graphics("jf.jpg")
+```
+
+Jennifer Lawrence é uma atriz norte-america que nasceu em Louisville no estado do Kentucky. Nascida em 1990 (28 anos) a atriz já ganhou diversos prêmios, inclusive dois Orcars. 
 
 
-```{r}
+```{r witdh=500}
 p <- plot_ly(filmes, x = ~ano, y = ~bilheteria,  type = 'pointcloud',
-            text = ~paste('Filme: ', filme, "\nAvalicao: ", avaliacao, "\nBilheteria: ", bilheteria, "\nAno:", ano)) %>%
+            text = ~paste('Filme: ', filme, "\nAvalicao: ", avaliacao, "\nBilheteria: ", bilheteria, "\nAno:", ano)) %>% 
   layout(title = "Linha do tempo: Carreira da Jennifer",
          xaxis = list(title = "Avaliação", tickangle = -45),
          yaxis = list(title = "Bilheteria"))
 
 p
 ```
+**Passe o mouse sobre os pontos para visualizar mais informações sobre os filmes.**
 
-## Na visualização acima podemos ver que Jennifer começou sua carreira em 2010 com o filme Winter's Bone. Suas melhores bilheterias foram com os filmes das sagas Jogos Vorazes e X-men.
-* Passe o mouse sobre os pontos para visualizar mais informações sobre os filmes.
+Na visualização acima podemos ver que Jennifer começou sua carreira em 2010 com o filme Winter's Bone, pelo qual recebeu nomeações para o Oscar, Globo de Ouro, Satellite Award, Independent Spirit Award e Screen Actors Guild Award de Melhor Atriz. Suas melhores bilheterias foram com os filmes das sagas Jogos Vorazes e X-men. O último filme no qual participou foi 'Red Sparrow' em 2018.
 
+Jennifer alcançou o reconhecimento internacional através de suas atuações como a mutante azul Mística e a heroína Katniss Everdeen nas franquias X-Men e The Hunger Games, respectivamente.
 
-## Antes de realizar os agrupamentos precisamos normalizar os dados, irei normalizar bilheteria e avalição que são os dados mais discrepantes.
-## Foi utilizado o 'log' nos dados de bilheteria já que são valores bem diferentes e grandes.
+```{r outro, echo=FALSE, out.width = '50%'}
+knitr::include_graphics("gf-hg.gif")
+```
+```{r mystic, echo=FALSE, out.width = '50%'}
+knitr::include_graphics("jl-mistyc.gif")
+```
 
+Em 2012 aos 22 anos, seu desempenho como a ninfomaníaca Tiffany Maxwel na comédia romântica Silver Linings Playbook rendeu-lhe seu primeiro Oscar de melhor atriz.
+
+```{r oscar, echo=FALSE, out.width = '50%'}
+knitr::include_graphics("oscar.jpg")
+```
+
+## Analisando os filmes da Jennifer:
+
+Para realizarmos agrupamentos e assim categorizarmos os filmes da atriz precisamos normalizar os dados, irei normalizar bilheteria e avaliação que são os dados mais discrepantes.
+Foi utilizado o 'log' nos dados de bilheteria já que são valores bem diferentes e grandes.
 ```{r}
 filmes_transformado = filmes %>% 
     mutate(avaliacao = as.vector(scale(avaliacao)), 
             bilheteria = as.vector(scale(log(bilheteria))))
 ```
-
-## Vamos agora agrupar os filmes em que Jennifer apareceu:
-## Primeiramente iremos precisar descobrir em quantos grupos devemos realizar o agrumamento. Vamos calcular a estatistíca GAP que irá auxiliar na escolha.
+Vamos agora agrupar os filmes em que Jennifer apareceu:
+Primeiramente iremos precisar descobrir em quantos grupos devemos realizar o agrumamento. Vamos calcular a estatistíca GAP que irá auxiliar na escolha.
 
 ```{r}
 plot_clusgap = function(clusgap, title = "Gap Statistic calculation results") {
@@ -95,9 +115,8 @@ gaps <- filmes_transformado %>%
 plot_clusgap(gaps)
 ```
 
-## Olhando o gráfico acima podemos perceber que o GAP esta propondo que o melhor valor para o agrupamento é 7 ou 3.  
-
-## Agrupamento com 3 não parece ser muito expressivo. Os grupos parecem muito amplos
+Olhando o gráfico acima podemos perceber que o GAP esta propondo que o melhor valor para o agrupamento é 7 ou 3.  
+Agrupamento com 3 não parece ser muito expressivo. Os grupos parecem muito amplos
 ```{r}
 set.seed(12345)
 
@@ -116,7 +135,7 @@ agrupado %>%
     geom_point(size = 2)
 ```
 
-## O agrupamento com 7 parece fazer mais sentido e parece melhor agrupar os filmes
+O agrupamento com 7 parece fazer mais sentido e parece melhor agrupar os filmes
 ```{r}
 set.seed(12345)
 
@@ -130,8 +149,7 @@ agrupado = km %>%
     augment(filmes_transformado)
 
 ```
-
-## Cluster interativo, passe o mouse sobre os pontos para ver informações sobre o filme.
+**Cluster interativo, passe o mouse sobre os pontos para ver informações sobre o filme.**
 ```{r}
 p <- plot_ly(agrupado, x = ~avaliacao, y = ~bilheteria, color=~.cluster,  type = 'pointcloud',
             text = ~paste('Filme: ', filme, "\nAvalicao: ", avaliacao, "\nBilheteria: ", bilheteria, "\nAno:", ano)) %>%
@@ -142,8 +160,7 @@ p <- plot_ly(agrupado, x = ~avaliacao, y = ~bilheteria, color=~.cluster,  type =
 p
 ```
 
-
-## Visualizando os grupos através de polígonos
+Visualizando os grupos através de polígonos
 ```{r}
  ggscatter(agrupado, x="avaliacao", y="bilheteria", color=".cluster")+
     stat_chull(aes(fill = .cluster), alpha=0.3, geom="polygon")+
@@ -152,14 +169,14 @@ p
 
 ```
 
-## Investigando as características dos grupos.
-### 1 - "Bilheteria mediana com péssima qualidade" - Este grupo é formado por apenas um filme. Este tem a pior avaliação dentre os filmes de Jennifer, tem uma nota 11  no Rotten Tomatoes. 
-### 2 - "Flops com um pouco de qualidade" - Aqui temos filmes que não fizeram tanto sucesso e tiveram baixa bilheteria, mas apresentam uma avaliação OK.
-### 3 - "Auges de qualidade, porém um pouco flops" - Nesse grupo estão os filmes de melhor qualidade de Jennifer, mas não tiveram grande bilheteria. Um desses filmes rendeu a ela diversos prêmios, incluindo um Oscar.
-### 4 - "Hits de maior qualidade da Jennifer" - Este grupo parace ser composto por filmes que tiveram grande bilheteria e boa avaliação. Entre eles estão 2 filmes da saga Jogo Vorazes e dois X-men. Os outros dois do grupo que apresentam menor bilheteria são filmes de drama, entre eles esta "Silver Linings Playbook" com o qual Jennifer ganhou um Orcar. 
-### 5 - "Os jogos vorazes não tão bons" - Aqui foram agrupados os dois primeiros filmes dos jogos vorazes. Possuem uma grande quantidade de bilheteria devido a característica de serem filmes inspirados em uma famosa saga de livros, porém a qualidade não é tão boa quanto o do grupo 4.
-### 6 - "Hits de baixa qualidade" - Aqui temos os filmes que Jennifer fez que teve grande hype por isso os altos valores de bilheteria, porém as avaliações não foram tão positivas.
-### 7 - "Neutros" - Aqui temos os filmes que não se tiveram valores chamativos nem de bilheteria nem de avaliação.
+## Investigando as características dos grupos:
+* **1** - "Bilheteria mediana com péssima qualidade" - Este grupo é formado por apenas um filme. Este tem a pior avaliação dentre os filmes de Jennifer, tem uma nota 11  no Rotten Tomatoes. 
+* **2** - "Flops com um pouco de qualidade" - Aqui temos filmes que não fizeram tanto sucesso e tiveram baixa bilheteria, mas apresentam uma avaliação OK.
+* **3** - "Auges de qualidade, porém um pouco flops" - Nesse grupo estão os filmes de melhor qualidade de Jennifer, mas não tiveram grande bilheteria. Um desses filmes rendeu a ela diversos prêmios, incluindo um Oscar.
+* **4** - "Hits de maior qualidade da Jennifer" - Este grupo parace ser composto por filmes que tiveram grande bilheteria e boa avaliação. Entre eles estão 2 filmes da saga Jogo Vorazes e dois X-men. Os outros dois do grupo que apresentam menor bilheteria são filmes de drama, entre eles esta "Silver Linings Playbook" com o qual Jennifer ganhou um Orcar. 
+* **5** - "Os jogos vorazes não tão bons" - Aqui foram agrupados os dois primeiros filmes dos jogos vorazes. Possuem uma grande quantidade de bilheteria devido a característica de serem filmes inspirados em uma famosa saga de livros, porém a qualidade não é tão boa quanto o do grupo 4.
+* **6** - "Hits de baixa qualidade" - Aqui temos os filmes que Jennifer fez que teve grande hype por isso os altos valores de bilheteria, porém as avaliações não foram tão positivas.
+* **7** - "Neutros" - Aqui temos os filmes que não se tiveram valores chamativos nem de bilheteria nem de avaliação.
 
 
 

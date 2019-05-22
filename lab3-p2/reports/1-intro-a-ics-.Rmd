@@ -272,6 +272,9 @@ amostra = lastfm %>%
   sample_n(200) 
 
 theta_c = funcao_theta(amostra)
+
+theta
+theta_c
 ```
 
 
@@ -279,7 +282,7 @@ theta_c = funcao_theta(amostra)
 repeticoes = 4000 # pelo menos 2000, mas mais não faz mal.
 
 um_bootstrap <- function(x){
-  news = x %>% pull(news)
+  proporcao = x %>% pull(news)
   boot_x <- sample(news,           # amostre dos dados
                    size = NROW(news), # tamanho igual ao recebido
                    replace = TRUE) # aqui é o bootstrap
@@ -334,27 +337,27 @@ intervalo
 ```
 
 ```{r}
-ggplot() +
-  geom_rect(
-    data = intervalo,
-    aes(xmin = valor_i, xmax = valor_s),
-    ymin = -Inf,
-    ymax = Inf,
-    fill = "gold",
-    alpha = .25
-  ) +
-  geom_histogram(
-    data = reamostragens,
-    aes(theta_c_s),
-    binwidth = .5,
-    fill = "white",
-    colour = "darkgrey"
-  ) +
-  geom_vline(xintercept = theta,
-             color = "blue",
-             size = 1.2) +
-  geom_vline(xintercept = theta_c, color = "dark green") +
-  labs(title = expression("Intervalo estimado via bootstrap"))
+    ggplot() +
+      geom_rect(
+        data = intervalo,
+        aes(xmin = valor_i, xmax = valor_s),
+        ymin = -Inf,
+        ymax = Inf,
+        fill = "gold",
+        alpha = .25
+      ) +
+      geom_histogram(
+        data = reamostragens,
+        aes(theta_c_s),
+        binwidth = .5,
+        fill = "white",
+        colour = "darkgrey"
+      ) +
+      geom_vline(xintercept = theta,
+                 color = "blue",
+                 size = 1.2) +
+      geom_vline(xintercept = theta_c, color = "dark green") +
+      labs(title = expression("Intervalo estimado via bootstrap"))
 ```
 
 Com outro nível de confiança:

@@ -273,7 +273,7 @@ amostra = lastfm %>%
 
 theta_c = funcao_theta(amostra)
 
-theta
+
 theta_c
 ```
 

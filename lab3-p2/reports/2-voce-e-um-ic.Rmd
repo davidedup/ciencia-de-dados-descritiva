@@ -87,7 +87,7 @@ theta = funcao_theta(lastfm)
 set.seed(1212)
 
 amostra = lastfm %>%  
-  sample_n(100) 
+  sample_n(300) 
 
 theta_c = funcao_theta(amostra)
 
@@ -181,62 +181,93 @@ ggplot() +
 
 ```{r}
 
-lastfm 
+lastfm2 <-  lastfm %>% 
+    filter(mediana_pop > 5) 
 
-lastfm %>% 
-    filter(mediana_pop > 5) %>% 
-    summarise( theta =  cor(mediana_pop, proporcao, method = 'pearson'))
-    
+
+theta_c = lastfm2 %>% 
+    summarise(correlacao = cor(mediana_pop, proporcao))
+
+theta_c = -0.05679804	
+
 ```
 
-
+Não parece existir correlação nos dados
 ```{r}
-lastfm %>%
+lastfm2 %>%
     ggplot(aes(x = mediana_pop, y = proporcao)) + 
     geom_point()
 ```
-
-
-```{r}
-funcao_theta = function(df) {
-  df %>%
-    pull(proporcao) %>%
-    mean()
-}
-
-theta = funcao_theta(lastfm)
-
-set.seed(1212)
-
-amostra = lastfm %>%  
-  sample_n(100) 
-
-theta_c = funcao_theta(amostra)
-
-```
-
 
 ```{r}
 repeticoes = 4000 # pelo menos 2000, mas mais não faz mal.
 
 um_bootstrap <- function(x){
-  correlacao = x %>% cor(mediana_pop, proporcao)
-  boot_x <- sample(correlacao,           # amostre dos dados
+  boot_x <- sample_n(x,          # amostre dos dados
                    size = NROW(proporcao), # tamanho igual ao recebido
                    replace = TRUE) # aqui é o bootstrap
-  return(mean(boot_x))
+  return(cor(boot_x$mediana_pop, boot_x$proporcao))
 }
 
 set.seed(1212)
 
 # A REAMOSTRAGEM
 reamostragens = tibble(i = 1:repeticoes) %>% 
-  mutate(theta_c_s = map_dbl(i, ~ um_bootstrap(amostra)))
+  mutate(theta_c_s = map_dbl(i, ~ um_bootstrap(lastfm2)))
 
-reamostragens
+reamostragens = reamostragens %>% 
+    mutate(a = theta_c_s - theta_c)
 
 ```
 
 
+```{r}
+reamostragens %>%
+  ggplot(aes(x = theta_c_s)) +
+  geom_histogram(binwidth = .001,
+                 colour = "darkorange",
+                 fill = "white")
 
-Crie intervalos com 95% de confiança.
+reamostragens %>%
+  ggplot(aes(x = theta_c_s - theta_c)) +
+  geom_histogram(binwidth = .001,
+                 colour = "darkblue",
+                 fill = "white")
+
+```
+```{r}
+
+theta_c
+intervalo = reamostragens %>% 
+  mutate(erro = theta_c_s - theta_c) %>% 
+  summarise(erro_i = quantile(erro, .05), 
+            erro_s = quantile(erro, .95))
+
+intervalo
+```
+
+
+
+```{r}
+intervalo = intervalo %>% 
+  mutate(valor_i = theta_c + erro_i, 
+         valor_s = theta_c + erro_s)
+
+intervalo
+```
+
+
+
+# Usando a biblioteca
+
+```{r}
+library(boot)
+
+
+booted <- 
+
+
+
+
+```
+

@@ -262,6 +262,7 @@ intervalo
 
 ```{r}
 library(boot)
+library(broom)
 
 theta <- function(d, i) {
     d %>%  
@@ -281,8 +282,45 @@ ci = tidy(booted,
 
 glimpse(ci)
 
+```
 
 
+
+```{r}
+
+library(boot)
+library(broom)
+
+theta <- function(d, i) {
+    d %>%  
+        slice(i) %>% 
+        summarise(correlacao = cor(mediana_pop, proporcao)) %>%
+        pull(correlacao)
+    
+}
+
+
+
+booted <- boot(data = lastfm, 
+               statistic = theta, 
+               R = 2000)
+
+ci = tidy(booted, 
+          conf.level = .95,
+          conf.method = "bca",
+          conf.int = TRUE)
+
+glimpse(ci)
 
 ```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
 

@@ -263,8 +263,23 @@ intervalo
 ```{r}
 library(boot)
 
+theta <- function(d, i) {
+    d %>%  
+        slice(i) %>% 
+        pull(proporcao) %>% 
+        mean()
+}
 
-booted <- 
+booted <- boot(data = lastfm, 
+               statistic = theta, 
+               R = 2000)
+
+ci = tidy(booted, 
+          conf.level = .95,
+          conf.method = "bca",
+          conf.int = TRUE)
+
+glimpse(ci)
 
 
 

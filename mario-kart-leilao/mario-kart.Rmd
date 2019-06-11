@@ -1,0 +1,70 @@
+---
+title: "regressão-mario-kart"
+output:
+    html_document:
+    df_print: paged
+theme: sandstone
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(boot)
+library(perm)
+library(broom)
+theme_set(theme_bw())
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r read, warning=FALSE, message=FALSE}
+dados = read_tsv(here::here("/data/marioKart.txt"))
+```
+
+```{r}
+dados = dados %>% 
+  filter(totalPr < 118.50)
+
+dados = dados %>% 
+  mutate(aumento =  totalPr -  startPr)
+```
+
+```{r}
+ggplot(dados, aes(x = nBids, y = totalPr )) + 
+  geom_point(alpha = 0.4, size = 1) + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+mod <- lm(totalPr ~nBids, 
+          data = dados)
+
+summary(mod)
+confint(mod)
+```
+
+```{r}
+ggplot(dados, aes(x = nBids, y = aumento )) + 
+  geom_point(alpha = 0.4, size = 1) + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+mod2 <- lm(aumento ~nBids, 
+          data = dados)
+
+summary(mod2)
+confint(mod2)
+```
+
+```{r}
+dados %>% 
+  ggplot(aes(x = stockPhoto, y = totalPr, color = stockPhoto)) +
+  geom_jitter()
+```
+
+```{r}
+mod3 <- lm(totalPr ~ stockPhoto, 
+           data= dados)
+
+summary(mod3)
+```
+

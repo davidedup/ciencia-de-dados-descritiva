@@ -1,0 +1,104 @@
+---
+title: "Lab4P1"
+output: html_notebook
+theme: sandstone
+---
+
+Nesse exemplo, examinaremos a relação entre número de tweets dos parlamentares e seu número de seguidores. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(broom)
+library(modelr)
+source(here::here("code/lib.R"))
+theme_set(theme_bw())
+```
+
+
+```{r read}
+atividade = read_projectdata()
+atividade = atividade %>% 
+  filter(seguidores > 0, n_proprio > 0, n_retweet > 0)
+```
+
+```{r}
+glimpse(atividade)
+```
+
+1. Qual a relação entre as características da atuação do parlamentar e o engajamento total que ele obtém no twitter? 
+2. Qual a relação entre as características da atuação do parlamentar e o *engajamento mediano* que ele obtém no twitter? 
+
+Por "características", queremos dizer: qual a casa (senado/câmara) do parlamentar, quantas pessoas ele segue, por quantas ele é seguido, quanto ele tuíta e quanto ele retuíta. 
+
+# 1. Qual a relação entre as características da atuação do parlamentar e o engajamento total que ele obtém no twitter? 
+## Investigando as variáveis
+
+```{r}
+atividade %>% ggplot(aes(x =  casa,y = log(seguidores))) + 
+  ggbeeswarm::geom_quasirandom()
+```
+
+Foi utilizado o log dos seguidores pois os valores apresentavam potências grandes e ficava de difícil vizualização. Fiz a visualização acima para tentar ver se existe alguma relação entre a quantidade de seguidores e casa ao qual o politico pertence. Porém a distribuição não aparenta ter concentrações. Ou seja, não parece haver relação entre a quantidade de seguidores e acasa ao qual o politico pertence. 
+
+
+```{r}
+atividade %>% ggplot(aes(x =  casa,y = log(engaj_total))) + 
+   ggbeeswarm::geom_quasirandom()
+```
+O mesmo foi feito para o engajamento total e obtivemos resultado similar ao supracitado. 
+Assim parece que a variavel casa não parece ser muito explicativa para o engajamento total.
+
+```{r}
+atividade %>% ggplot(aes(x = log(engaj_total), y = log(seguidores))) + 
+geom_point()
+```
+No plot acima tivemos que aplicar a tranformação de log devido aos valores altos das variaveis. No plot podemos observar uma relação que parece ser linear entre o numero de seguidores e o engajamento total.
+
+
+```{r}
+cor_engaj_total_seguidores <- cor(log(atividade$engaj_total), log(atividade$seguidores))
+glimpse(cor_engaj_total_seguidores)
+```
+Existe uma correlação linear de 0,6 entre as variaveis transformadas utilizando log.
+Parece que a variavel seguidores é bastante significativa para o engaj_total
+
+
+```{r}
+atividade %>% ggplot(aes(x = log(engaj_total), y = log(segue))) + 
+geom_point()
+```
+
+```{r}
+cor(log(atividade$engaj_total), log(atividade$segue))
+```
+Não parece exister um correlação linear plausivel entre quantidade de pessoas que segue e o engajamento total.
+A variavel segue não perec ser significativa para a variavel engajamento total.
+
+```{r}
+atividade %>% ggplot(aes(x = log(engaj_total), y = log(n_proprio))) + 
+geom_point()
+```
+
+```{r}
+cor(log(atividade$engaj_total), log(atividade$n_proprio))
+```
+
+```{r}
+atividade %>% ggplot(aes(x = log(engaj_total), y = log(n_retweet))) + 
+geom_point()
+```
+
+A quantidade de tweets não contanto retweets paece ser significativa para o engajemnto total.Assim como a quantidade de retweets. O que já era esperado.
+
+```{r}
+modelo_eng_total <- lm(log(engaj_total) ~ casa + log(segue) +  log(seguidores) + log(n_proprio) + log(n_retweet),
+                       data = atividade)
+
+glance(modelo_eng_total)
+tidy(modelo_eng_total)
+```
+
+
+
+
+
